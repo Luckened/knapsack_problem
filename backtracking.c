@@ -1,14 +1,3 @@
-/************************************************
-
-LAED1 - Trabalho Pratico 1
-Alunos: Davi Emediato e Lucca Miranda
-Matriculas: 20183012896 e 20183011736
-Descricao do programa: problema da mochila por
-tentativa e erro (bruteforce)
-Data: 12/04/2019
-
-************************************************/
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -20,22 +9,16 @@ void geraVetor(int * vetor, int n);
 void mochila(int * itensNaMochila, int qtdItens, int * itensPeso, int * itensValor, int tamanhoMochila, int * pesoFinal, int * valorFinal);
 int calcPeso(int * itensNaMochila, int * itensPeso, int qtdItens);
 int calcValor(int * itensNaMochila, int * itensValor, int qtdItens);
-void copia(int * orig, int * dest, int n);
+void copy(int * orig, int * dest, int n);
 void zera(int * vetor, int n);
-struct timeval inicio, fim;
-struct rusage usage;
 
 void main() {
     int * itensNaMochila, qtdItens, * itensPeso, * itensValor, tamanhoMochila, pesoFinal, valorFinal;
     char arq[30];
     FILE * fp;
-    int who = RUSAGE_SELF;
-    double tempoTotal, uTotal, sTotal;
 
     printf("Digite o nome do arquivo: ");
     scanf("%s", arq);
-
-    gettimeofday(&inicio, NULL);
 
     fp = fopen(arq, "r");
     if (!fp) {
@@ -45,7 +28,7 @@ void main() {
 
     int i = 0;
 
-    //preenche os vetores de peso e valor dos itens, bem como numero de itens e cap da mochila
+    //fill the arrays with weight and value of the items, as well as the knapsack size
     while (!feof(fp)) {
         if (i == 0)
             fscanf(fp, "%d", & tamanhoMochila);
@@ -64,50 +47,6 @@ void main() {
     zera(itensNaMochila, qtdItens);
     mochila(itensNaMochila, qtdItens, itensPeso, itensValor, tamanhoMochila, & pesoFinal, & valorFinal);
     saidaArquivo(itensNaMochila, itensPeso, itensValor, qtdItens, pesoFinal, valorFinal);
-
-    gettimeofday(&fim, NULL);
-	getrusage(who, &usage);
-    long double utotalseg = usage.ru_utime.tv_sec;
-    long double utotalmicroseg = usage.ru_utime.tv_usec; 
-    long double stotalseg = usage.ru_stime.tv_sec;
-    long double stotalmicroseg = usage.ru_stime.tv_usec;
-
-    long double totalseg = fim.tv_sec - inicio.tv_sec; //tempo final - inicial em segundos
-	long double totalmicroseg = fim.tv_usec - inicio.tv_usec; //tempo final - inicial em microsegundos
-
-    if (totalmicroseg < 0){
-        totalmicroseg += 1000000;
-        totalseg --;
-    }
-
-    tempoTotal = totalseg + (totalmicroseg/1000000);
-    uTotal = utotalseg + (utotalmicroseg/1000000);
-    sTotal = stotalseg + (stotalmicroseg/1000000);
-
-    printf("\n");
-    printf("Tempo total de execucao = %lf", tempoTotal);
-    printf("\n");
-    
-    printf ("\n");
-    printf ("***************************************************************\n");
-    printf ("Tempo total: %Lf segundos e %Lf microssegundos.\n", totalseg, totalmicroseg);
-    printf ("***************************************************************\n");
-    printf ("\n");
-
-    printf("\n");
-    printf("Tempo total de CPU = %lf", uTotal);
-    printf("\n");
-
-    printf("\n");
-    printf("Tempo total de chamadas de sistema = %lf", sTotal);
-    printf("\n");
-
-    printf ("\n");
-    printf ("***************************************************************\n");
-    printf ("Tempo de usuario: %Lf segundos e %Lf microssegundos.\n", utotalseg, utotalmicroseg);
-    printf ("Tempo de sistema: %Lf segundos e %Lf microssegundos.\n", stotalseg, stotalmicroseg);
-    printf ("***************************************************************\n");
-    printf ("\n");
 }
 
 void saidaArquivo(int * itensNaMochila, int * itensPeso, int * itensValor, int qtdItens, int pesoFinal, int valorFinal) {
@@ -152,7 +91,7 @@ void geraVetor(int * vetor, int n) {
 int calcPeso(int * itensNaMochila, int * itensPeso, int qtdItens) {
     int sum = 0;
     for (int i = 0; i < qtdItens; i++)
-        if (itensNaMochila[i]) //se item atual esta na mochila, soma o peso dele no total
+        if (itensNaMochila[i]) //if the current item is in the knapsack, sum its weight
             sum += itensPeso[i];
     return sum;
 }
@@ -160,13 +99,13 @@ int calcPeso(int * itensNaMochila, int * itensPeso, int qtdItens) {
 int calcValor(int * itensNaMochila, int * itensValor, int qtdItens) {
     int sum = 0;
     for (int i = 0; i < qtdItens; i++)
-        if (itensNaMochila[i]) //se item atual esta na mochila, soma o valor dele no total
+        if (itensNaMochila[i]) //if the current item is in the knapsack, sum its value
             sum += itensValor[i];
     return sum;
 }
 
-//copia o vetor binario atual para a solucao
-void copia(int * orig, int * dest, int n) {
+//copy binary array
+void copy(int * orig, int * dest, int n) {
     for (int i = 0; i < n; i++)
         dest[i] = orig[i];
 }
@@ -177,17 +116,16 @@ void mochila(int * itensNaMochila, int qtdItens, int * itensPeso, int * itensVal
     int * aux = malloc(qtdItens * sizeof(int));
     zera(aux, qtdItens);
 
-    //gera todas combinacoes possiveis com 0 (nao esta na mochila) e 1 (esta na mochila) -> 2^n - 1 combinacoes
+    //generates all the possible combinations with 0 (not in) and 1 (in the knapsack) -> 2^n - 1 combinations
     for (int i = 0; i < pow(2, qtdItens) - 1; i++) {
-        geraVetor(itensNaMochila, qtdItens); //calcula proximo vetor binario (contador)
-        int currentW = calcPeso(itensNaMochila, itensPeso, qtdItens); //calcula o peso da combinacao atual
-        int currentV = calcValor(itensNaMochila, itensValor, qtdItens); //calcula valor total da combinacao atual
-        if (currentW <= tamanhoMochila && currentV > * valorFinal) { //se peso atual nao excede a mochila e valor eh maior que o ultimo,
-            copia(itensNaMochila, aux, qtdItens); //toma ele como (possivel) solucao
+        geraVetor(itensNaMochila, qtdItens); //calculates the next binary array (counter)
+        int currentW = calcPeso(itensNaMochila, itensPeso, qtdItens); //current weight of this comb
+        int currentV = calcValor(itensNaMochila, itensValor, qtdItens); //current value of this comb
+        if (currentW <= tamanhoMochila && currentV > * valorFinal) { //if current weight does not exceed knapsack size
+            copy(itensNaMochila, aux, qtdItens); //and value is better than last one, take it as a possible solution
             * valorFinal = currentV;
             * pesoFinal = currentW;
         }
     }
-
-    copia(aux, itensNaMochila, qtdItens);
+    copy(aux, itensNaMochila, qtdItens);
 }
